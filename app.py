@@ -271,7 +271,7 @@ if selected_tab == "Overview":
         "artist",
         "release_year",
         "artwork_url",
-        COUNT(*) AS streams
+        COUNT(*) AS "streams"
         FROM "streams_enriched"
         WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
         {country_clause}
