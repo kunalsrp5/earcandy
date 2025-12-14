@@ -226,11 +226,11 @@ FROM "streams_enriched"
 {country_clause}
 """,conn)
 
-total_streams = int(kpi_df["total_streams"][0])
-unique_users = int(kpi_df["unique_users"][0])
-dau = int(dau_df["dau"][0])
-revenue = float(kpi_df["revenue"][0])
-arpu = float(kpi_df["arpu"][0])
+total_streams = int(kpi_df["TOTAL_STREAMS"][0])
+unique_users = int(kpi_df["UNIQUE_USERS"][0])
+dau = int(dau_df["DAU"][0])
+revenue = float(kpi_df["REVENUE"][0])
+arpu = float(kpi_df["ARPU"][0])
 
 # --------------------------------------------------
 # KPI DISPLAY
