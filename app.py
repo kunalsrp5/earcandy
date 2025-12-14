@@ -168,7 +168,7 @@ st.caption("Snowflake • Streamlit • Real-time analytics")
 st.sidebar.header("Filters")
 
 date_range = pd.read_sql("""
-SELECT MIN(event_date) AS MIN_DATE, MAX(event_date) AS MAX_DATE
+SELECT MIN("event_date") AS MIN_DATE, MAX("event_date") AS MAX_DATE
 FROM "streams_enriched"
 """,conn)
 
@@ -189,9 +189,9 @@ if not isinstance(date_input,(list,tuple)) or len(date_input)!=2:
 start_date, end_date = date_input
 
 country_df = pd.read_sql("""
-SELECT DISTINCT country
-FROM streams_enriched
-WHERE country IS NOT NULL
+SELECT DISTINCT "country"
+FROM "streams_enriched"
+WHERE "country" IS NOT NULL
 """,conn)
 
 country_filter = st.sidebar.multiselect("Country",country_df["country"].tolist())
@@ -207,21 +207,21 @@ if country_filter:
 kpi_df = pd.read_sql(f"""
 SELECT
 COUNT(*) AS total_streams,
-COUNT(DISTINCT uuid) AS unique_users,
+COUNT(DISTINCT "uuid") AS unique_users,
 COUNT(*) * 0.008 AS revenue,
-(COUNT(*) * 0.008) / NULLIF(COUNT(DISTINCT uuid),0) AS arpu
-FROM streams_enriched
-WHERE event_date BETWEEN '{start_date}' AND '{end_date}'
+(COUNT(*) * 0.008) / NULLIF(COUNT(DISTINCT "uuid)",0) AS arpu
+FROM "streams_enriched"
+WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
 {country_clause}
 """,conn)
 
 # DAU
 dau_df = pd.read_sql(f"""
-SELECT COUNT(DISTINCT uuid) AS dau
-FROM streams_enriched
-WHERE event_date = (
-SELECT MAX(event_date)
-FROM streams_enriched
+SELECT COUNT(DISTINCT "uuid") AS dau
+FROM "streams_enriched"
+WHERE "event_date" = (
+SELECT MAX("event_date")
+FROM "streams_enriched"
 )
 {country_clause}
 """,conn)
@@ -267,16 +267,16 @@ if selected_tab == "Overview":
     with left_col:
         album_df = pd.read_sql(f"""
         SELECT
-        album,
-        artist,
-        release_year,
-        artwork_url,
+        "album",
+        "artist",
+        "release_year",
+        "artwork_url",
         COUNT(*) AS streams
-        FROM streams_enriched
-        WHERE event_date BETWEEN '{start_date}' AND '{end_date}'
+        FROM "streams_enriched"
+        WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
         {country_clause}
-        GROUP BY album, artist, release_year, artwork_url
-        ORDER BY streams DESC
+        GROUP BY "album", "artist", "release_year", "artwork_url"
+        ORDER BY "streams" DESC
         LIMIT 1
         """,conn)
     
@@ -296,18 +296,18 @@ if selected_tab == "Overview":
         """,unsafe_allow_html=True)
 
         new_releases_df = pd.read_sql(f"""
-        select title,artist,artwork_url
-        from streams_enriched
-        where release_year in (
-        select max(release_year) from (
-        select release_year from streams_enriched
-        where release_year is not null
-        and event_date BETWEEN '{start_date}' AND '{end_date}'
+        select "title","artist","artwork_url"
+        from "streams_enriched"
+        where "release_year" in (
+        select max("release_year") from (
+        select "release_year" from "streams_enriched"
+        where "release_year" is not null
+        and "event_date" BETWEEN '{start_date}' AND '{end_date}'
         {country_clause}
-        group by release_year
+        group by "release_year"
         )
         )
-        group by title,artist,artwork_url
+        group by "title","artist","artwork_url"
         limit 4;
         """,conn)
         
@@ -346,23 +346,23 @@ elif selected_tab == "Content":
     st.subheader("Top Performing Content")
 
     top_songs_df = pd.read_sql(f"""
-    SELECT title,
+    SELECT "title",
     COUNT(*) AS streams
-    FROM streams_enriched
-    WHERE event_date BETWEEN '{start_date}' AND '{end_date}'
+    FROM "streams_enriched"
+    WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
     {country_clause}
-    GROUP BY title
+    GROUP BY "title"
     ORDER BY streams DESC
     LIMIT 10
     """,conn)
     
-    top_artists_df = pd.read_sql(f"""
-    SELECT artist,
+    top_artists_df = pd.read_sql(ff"""
+    SELECT "artist",
     COUNT(*) AS streams
-    FROM streams_enriched
-    WHERE event_date BETWEEN '{start_date}' AND '{end_date}'
+    FROM "streams_enriched"
+    WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
     {country_clause}
-    GROUP BY artist
+    GROUP BY "artist"
     ORDER BY streams DESC
     LIMIT 10
     """,conn)
@@ -383,18 +383,18 @@ elif selected_tab == "Trends":
     st.subheader("🔥 Trending Songs (Last 7 Days)")
 
     trending_df = pd.read_sql(f"""
-    SELECT title,
-    artist,
-    artwork_url,
-    preview_url,
-    COUNT(*) AS streams_last_7_days
-    FROM streams_enriched
-    WHERE event_date >= CURRENT_DATE - 7
+    SELECT "title",
+    "artist",
+    "artwork_url",
+    "preview_url",
+    COUNT(*) AS "streams_last_7_days"
+    FROM "streams_enriched"
+    WHERE "event_date" >= CURRENT_DATE - 7
     {country_clause}
-    and artwork_url is not null
-    and preview_url is not null
-    GROUP BY title,artist,artwork_url,preview_url
-    ORDER BY streams_last_7_days DESC
+    and "artwork_url" is not null
+    and "preview_url" is not null
+    GROUP BY "title","artist","artwork_url","preview_url"
+    ORDER BY "streams_last_7_days" DESC
     LIMIT 10
     """,conn)
     
@@ -435,16 +435,16 @@ elif selected_tab == "Retention":
 
     retention_df = pd.read_sql(f"""
     SELECT
-    COUNT(DISTINCT CASE WHEN event_date = registered_on + 1 THEN uuid END)
-    / NULLIF(COUNT(DISTINCT uuid),0) * 100 AS day1_retention,
+    COUNT(DISTINCT CASE WHEN "event_date" = "registered_on" + 1 THEN "uuid" END)
+    / NULLIF(COUNT(DISTINCT "uuid"),0) * 100 AS day1_retention,
     
-    COUNT(DISTINCT CASE WHEN event_date = registered_on + 7 THEN uuid END)
-    / NULLIF(COUNT(DISTINCT uuid),0) * 100 AS day7_retention,
+    COUNT(DISTINCT CASE WHEN "event_date" = "registered_on" + 7 THEN "uuid" END)
+    / NULLIF(COUNT(DISTINCT "uuid"),0) * 100 AS day7_retention,
     
-    COUNT(DISTINCT CASE WHEN event_date = registered_on + 30 THEN uuid END)
-    / NULLIF(COUNT(DISTINCT uuid),0) * 100 AS day30_retention
-    FROM streams_enriched
-    WHERE registered_on BETWEEN '{start_date}' AND '{end_date}'
+    COUNT(DISTINCT CASE WHEN "event_date" = "registered_on" + 30 THEN "uuid" END)
+    / NULLIF(COUNT(DISTINCT "uuid"),0) * 100 AS day30_retention
+    FROM "streams_enriched"
+    WHERE "registered_on" BETWEEN '{start_date}' AND '{end_date}'
     {country_clause}
     """,conn)
     
@@ -463,22 +463,22 @@ elif selected_tab == "Retention":
 elif selected_tab == "Demographics":
     st.subheader("Audience Breakdown")
 
-    gender_df = pd.read_sql(f"""
-    SELECT gender,
-    COUNT(DISTINCT uuid) AS users
-    FROM streams_enriched
-    WHERE event_date BETWEEN '{start_date}' AND '{end_date}'
+    gender_df = pd.read_sql(ff"""
+    SELECT "gender",
+    COUNT(DISTINCT "uuid") AS users
+    FROM "streams_enriched"
+    WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
     {country_clause}
-    GROUP BY gender
+    GROUP BY "gender"
     """,conn)
     
-    country_df = pd.read_sql(f"""
-    SELECT country,
+    country_df = pd.read_sql(ff"""
+    SELECT "country",
     COUNT(*) AS streams
-    FROM streams_enriched
-    WHERE event_date BETWEEN '{start_date}' AND '{end_date}'
+    FROM "streams_enriched"
+    WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
     {country_clause}
-    GROUP BY country
+    GROUP BY "country"
     ORDER BY streams DESC
     LIMIT 10
     """,conn)
