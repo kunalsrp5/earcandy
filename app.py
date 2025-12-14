@@ -356,7 +356,7 @@ elif selected_tab == "Content":
     LIMIT 10
     """,conn)
     
-    top_artists_df = pd.read_sql(ff"""
+    top_artists_df = pd.read_sql(f"""
     SELECT "artist",
     COUNT(*) AS streams
     FROM "streams_enriched"
