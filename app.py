@@ -169,7 +169,7 @@ st.sidebar.header("Filters")
 
 date_range = pd.read_sql("""
 SELECT MIN(event_date) AS MIN_DATE, MAX(event_date) AS MAX_DATE
-FROM streams_enriched
+FROM "streams_enriched"
 """,conn)
 
 #start_date, end_date = st.sidebar.date_input(
