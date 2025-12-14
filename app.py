@@ -463,7 +463,7 @@ elif selected_tab == "Retention":
 elif selected_tab == "Demographics":
     st.subheader("Audience Breakdown")
 
-    gender_df = pd.read_sql(ff"""
+    gender_df = pd.read_sql(f"""
     SELECT "gender",
     COUNT(DISTINCT "uuid") AS users
     FROM "streams_enriched"
@@ -472,7 +472,7 @@ elif selected_tab == "Demographics":
     GROUP BY "gender"
     """,conn)
     
-    country_df = pd.read_sql(ff"""
+    country_df = pd.read_sql(f"""
     SELECT "country",
     COUNT(*) AS streams
     FROM "streams_enriched"
