@@ -209,7 +209,7 @@ SELECT
 COUNT(*) AS total_streams,
 COUNT(DISTINCT "uuid") AS unique_users,
 COUNT(*) * 0.008 AS revenue,
-(COUNT(*) * 0.008) / NULLIF(COUNT(DISTINCT "uuid)",0) AS arpu
+(COUNT(*) * 0.008) / NULLIF(COUNT(DISTINCT "uuid"),0) AS arpu
 FROM "streams_enriched"
 WHERE "event_date" BETWEEN '{start_date}' AND '{end_date}'
 {country_clause}
