@@ -54,7 +54,7 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
                 cols[2].markdown(
                 f"""
                 <div style="text-align:right;">
-                <b>{int(row[stream_col])}</b><br/>
+                <b>{int(row[stream_col])}</b>
                 Streams
                 </div>
                 """,
