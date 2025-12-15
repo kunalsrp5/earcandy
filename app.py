@@ -96,8 +96,7 @@ LIMIT 50;
 wordcloud = WordCloud(
 width=800,
 height=450,
-background_color="white",
-colormap="viridis"
+background_color="white"
 ).generate_from_frequencies(
 dict(zip(artist_df["artist"], artist_df["streams"]))
 )
@@ -105,7 +104,7 @@ dict(zip(artist_df["artist"], artist_df["streams"]))
 fig, ax = plt.subplots(figsize=(8, 4))
 ax.imshow(wordcloud, interpolation="bilinear")
 ax.axis("off")
-ax.set_title("Top Artists by Streams",fontsize=18,fontweight="bold",pad=20)
+ax.set_title("Top Artists by Streams",fontsize=12,fontweight="bold",pad=20)
 
 col2.pyplot(fig)
 
