@@ -38,7 +38,7 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
                 cols = st.columns([1, 4, 2])
 
                 if image_col and pd.notna(row[image_col]):
-                    cols[0].image(row[image_col], width=55)
+                    cols[0].image(row[image_col], width=100)
                 else:
                     cols[0].markdown("🎵")
 
