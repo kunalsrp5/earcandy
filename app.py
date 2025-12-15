@@ -123,7 +123,7 @@ END AS "Generation",
 COUNT(*) AS "Streams"
 FROM "streams_enriched"
 WHERE "country" IS NOT NULL
-GROUP BY "country", "generation";
+GROUP BY "Country", "Generation";
 """,conn)
 
 fig_gen = px.bar(
