@@ -96,7 +96,7 @@ LIMIT 50;
 wordcloud = WordCloud(
 width=800,
 height=400,
-background_color="black"
+background_color="white"
 ).generate_from_frequencies(
 dict(zip(artist_df["artist"], artist_df["streams"]))
 )
