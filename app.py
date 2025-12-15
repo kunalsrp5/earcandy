@@ -27,24 +27,104 @@ def get_connection():
 
 conn = get_connection()
 
+#run query func
+
+def run_query(sql):
+    return st.session_state["snowflake_session"].sql(sql).to_pandas()
+
+
+#paginated card
+def paginated_card_list(title,df,name_col,stream_col,image_col=None,key_prefix="",page_size=5):
+    st.markdown(f"{title}")
+    st.caption(f"Total {title.lower()}: {len(df)}")
+
+    #card search func
+    search = st.text_input(
+    "Search",
+    key=f"{key_prefix}_search"
+    )
+
+    if search:
+        df = df[df[name_col].str.contains(search, case=False, na=False)]
+
+    #card sort func
+    sort_order = st.selectbox(
+    "Sort by streams",
+    ["Descending", "Ascending"],
+    key=f"{key_prefix}_sort"
+    )
+
+    df = df.sort_values(
+    stream_col,
+    ascending=(sort_order == "Ascending")
+    )
+
+    #pagination session
+    page_key = f"{key_prefix}_page"
+    if page_key not in st.session_state:
+        st.session_state[page_key] = 1
+        total_pages = max(1, math.ceil(len(df) / page_size))
+        start = (st.session_state[page_key] - 1) * page_size
+        end = start + page_size
+        page_df = df.iloc[start:end]
+
+    #card rows
+    for _, row in page_df.iterrows():
+        cols = st.columns([1, 4, 2])
+        if image_col:
+            cols[0].image(row[image_col], width=60)
+        else:
+            cols[0].markdown("🎵")
+
+        cols[1].markdown(f"**{row[name_col]}**")
+
+        cols[2].markdown(
+        f"""
+        <div style="text-align:right">
+        <b>{int(row[stream_col])}</b><br/>
+        Streams
+        </div>
+        """,
+        unsafe_allow_html=True
+        )
+    st.divider()
+
+    #pagination controls
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c1:
+        if st.button("<-", key=f"{key_prefix}_prev"):
+            if st.session_state[page_key] > 1:
+                st.session_state[page_key] -= 1
+
+    with c3:
+        if st.button("->", key=f"{key_prefix}_next"):
+            if st.session_state[page_key] < total_pages:
+                st.session_state[page_key] += 1
+
+    c2.markdown(
+    f"<div style='text-align:center'>Page {st.session_state[page_key]} of {total_pages}</div>",
+    unsafe_allow_html=True
+    )
+
+
 #kpi cards
-kpi_df = pd.read_sql(f"""
+kpi_df = run_query(f"""
 SELECT
 COUNT(*) AS "total_streams",
 COUNT(DISTINCT "uuid") AS "unique_users",
 COUNT(*) * 0.008 AS "revenue",
 (COUNT(*) * 0.008) / NULLIF(COUNT(DISTINCT "uuid"),0) AS "arpu"
 FROM "streams_enriched"
-""",conn)
+""")
 
-dau_df = pd.read_sql(f"""
+dau_df = run_query(f"""
 SELECT COUNT(DISTINCT "uuid") AS "dau"
 FROM "streams_enriched"
 WHERE "event_date" = (
 SELECT MAX("event_date")
 FROM "streams_enriched"
 )
-""",conn)
+""")
 
 total_streams = int(kpi_df["total_streams"][0])
 unique_users = int(kpi_df["unique_users"][0])
@@ -68,12 +148,12 @@ st.divider()
 
 col1, col2 = st.columns([1, 1])
 
-genre_df = pd.read_sql("""
+genre_df = run_query("""
 SELECT "genre", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "genre" IS NOT NULL
 GROUP BY "genre"
-""",conn)
+""")
 
 fig_genre = px.pie(
 genre_df,
@@ -84,14 +164,14 @@ title="Streams Distribution by Genre"
 
 col1.plotly_chart(fig_genre, use_container_width=True)
 
-artist_df = pd.read_sql("""
+artist_df = run_query("""
 SELECT "artist", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "artist" IS NOT NULL
 GROUP BY "artist"
 ORDER BY "streams" DESC
 LIMIT 50;
-""",conn)
+""")
 
 wordcloud = WordCloud(
 width=800,
@@ -110,57 +190,80 @@ col2.pyplot(fig)
 
 st.divider()
 
-#cards sections
+#cards sections (2x2)
 
 #1. countries
-st.subheader("Countries")
-
-country_card_df = pd.read_sql("""
+country_card_df = run_query("""
 SELECT "country", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "country" IS NOT NULL
 GROUP BY "country"
-ORDER BY "streams" DESC
-LIMIT 5;
-""",conn)
-
-st.markdown("Total Countries:")
-cols = st.columns(5)
-for i, row in country_card_df.iterrows():
-    with cols[i]:
-        st.metric(row["country"], f"{row["streams"]} streams")
+""")
 
 #2. artists
-artist_card_df = pd.read_sql("""
+artist_card_df = run_query("""
 SELECT "artist", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "artist" IS NOT NULL
 GROUP BY "artist"
-ORDER BY "streams" DESC
-LIMIT 5;
-""",conn)
-
-st.markdown("Total Artists:")
-cols = st.columns(5)
-for i, row in artist_card_df.iterrows():
-    with cols[i]:
-        st.metric(row["artist"], f"{row["streams"]} streams")
+""")
 
 #3. releases
-release_card_df = pd.read_sql("""
-SELECT "title", COUNT(*) AS "streams"
+song_card_df = run_query("""
+SELECT "artwork_url","title", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "title" IS NOT NULL
-GROUP BY "title"
-ORDER BY "streams" DESC
-LIMIT 5;
-""",conn)
+GROUP BY "title","artwork_url"
+""")
 
-st.markdown("Total Releases")
-cols = st.columns(5)
-for i, row in release_card_df.iterrows():
-    with cols[i]:
-        st.metric(row["title"], f"{row["streams"]} streams")
+#4. albums
+albums_card_df = run_query("""
+SELECT "artwork_url","album", COUNT(*) AS "streams"
+FROM "streams_enriched"
+WHERE "album" IS NOT NULL
+GROUP BY "album","artwork_url"
+""")
+
+row1_col1, row1_col2 = st.columns(2)
+row2_col1, row2_col2 = st.columns(2)
+
+with row1_col1:
+    paginated_card_list(
+    title="Songs",
+    df=song_card_df,
+    name_col="title",
+    stream_col="streams",
+    image_col="artwork_url",
+    key_prefix="songs"
+    )
+
+with row1_col2:
+    paginated_card_list(
+    title="Artists",
+    df=artist_card_df,
+    name_col="artist",
+    stream_col="streams",
+    key_prefix="artists"
+    )
+
+with row2_col1:
+    paginated_card_list(
+    title="Countries",
+    df=country_card_df,
+    name_col="country",
+    stream_col="streams",
+    key_prefix="countries"
+    )
+
+with row2_col2:
+    paginated_card_list(
+    title="Albums",
+    df=albums_card_df,
+    name_col="album",
+    stream_col="streams",
+    image_col="artwork_url",
+    key_prefix="albums"
+    )
 
 st.divider()
 
