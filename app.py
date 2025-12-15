@@ -87,7 +87,7 @@ col1.plotly_chart(fig_genre, use_container_width=True)
 artist_df = pd.read_sql("""
 SELECT "artist", COUNT(*) AS "streams"
 FROM "streams_enriched"
-AND "artist" IS NOT NULL
+WHERE "artist" IS NOT NULL
 GROUP BY "artist"
 ORDER BY "streams" DESC
 LIMIT 50;
