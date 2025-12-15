@@ -32,19 +32,19 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
     st.markdown(f"### {title}")
     st.caption(f"Total {title.lower()}: {len(df)}")
 
-    with st.container(height=380):
+    with st.container(height=360):
         for _, row in df.iterrows():
             with st.container():
-                cols = st.columns([1.2, 4.5, 1.8], gap="small")
+                cols = st.columns([1,5,2])
 
                 if image_col and pd.notna(row[image_col]):
-                    cols[0].image(row[image_col], width=100)
+                    cols[0].image(row[image_col], width=50)
                 else:
                     cols[0].markdown("🎵")
 
                 cols[1].markdown(
                 f"""
-                <div style="line-height:1.2;white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                 <b>{row[name_col]}</b>
                 </div>
                 """,
@@ -53,7 +53,7 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
 
                 cols[2].markdown(
                 f"""
-                <div style="text-align:right;line-height:1.1;">
+                <div style="text-align:right;">
                 <b>{int(row[stream_col])}</b><br/>
                 Streams
                 </div>
