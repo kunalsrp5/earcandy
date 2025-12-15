@@ -27,31 +27,19 @@ def get_connection():
 
 conn = get_connection()
 
-#run query func
-
-def run_query(sql):
-    return st.session_state["snowflake_session"].sql(sql).to_pandas()
-
-
 #paginated card
-def paginated_card_list(title,df,name_col,stream_col,image_col=None,key_prefix="",page_size=5):
-    st.markdown(f"{title}")
+def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
+    st.markdown(f"### {title}")
     st.caption(f"Total {title.lower()}: {len(df)}")
 
-    #card search func
-    search = st.text_input(
-    "Search",
-    key=f"{key_prefix}_search"
-    )
-
+    search = st.text_input(f"Search {title}")
     if search:
         df = df[df[name_col].str.contains(search, case=False, na=False)]
 
-    #card sort func
     sort_order = st.selectbox(
     "Sort by streams",
     ["Descending", "Ascending"],
-    key=f"{key_prefix}_sort"
+    key=f"{title}_sort"
     )
 
     df = df.sort_values(
@@ -59,72 +47,72 @@ def paginated_card_list(title,df,name_col,stream_col,image_col=None,key_prefix="
     ascending=(sort_order == "Ascending")
     )
 
-    #pagination session
-    page_key = f"{key_prefix}_page"
-    if page_key not in st.session_state:
-        st.session_state[page_key] = 1
-        total_pages = max(1, math.ceil(len(df) / page_size))
-        start = (st.session_state[page_key] - 1) * page_size
-        end = start + page_size
-        page_df = df.iloc[start:end]
-
-    #card rows
-    for _, row in page_df.iterrows():
-        cols = st.columns([1, 4, 2])
-        if image_col:
-            cols[0].image(row[image_col], width=60)
-        else:
-            cols[0].markdown("🎵")
-
-        cols[1].markdown(f"**{row[name_col]}**")
-
-        cols[2].markdown(
-        f"""
-        <div style="text-align:right">
-        <b>{int(row[stream_col])}</b><br/>
-        Streams
-        </div>
-        """,
-        unsafe_allow_html=True
-        )
-    st.divider()
-
-    #pagination controls
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c1:
-        if st.button("<-", key=f"{key_prefix}_prev"):
-            if st.session_state[page_key] > 1:
-                st.session_state[page_key] -= 1
-
-    with c3:
-        if st.button("->", key=f"{key_prefix}_next"):
-            if st.session_state[page_key] < total_pages:
-                st.session_state[page_key] += 1
-
-    c2.markdown(
-    f"<div style='text-align:center'>Page {st.session_state[page_key]} of {total_pages}</div>",
+    st.markdown(
+    """
+    <style>
+    .scroll-box {
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 10px;
+    border-radius: 6px;
+    }
+    </style>
+    """,
     unsafe_allow_html=True
     )
 
+    st.markdown('<div class="scroll-box">', unsafe_allow_html=True)
+
+    for _, row in df.iterrows():
+        cols = st.columns([1, 4, 2])
+
+        if image_col and pd.notna(row[image_col]):
+            cols[0].image(row[image_col], width=55)
+        else:
+            cols[0].markdown("🎵")
+
+    cols[1].markdown(
+    f"""
+    <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+    <b>{row[name_col]}</b>
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
+
+    cols[2].markdown(
+    f"""
+    <div style="text-align:right">
+    <b>{int(row[stream_col])}</b><br/>
+    Streams
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
+
+    st.divider()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 #kpi cards
-kpi_df = run_query(f"""
+kpi_df = pd.read_sql(f"""
 SELECT
 COUNT(*) AS "total_streams",
 COUNT(DISTINCT "uuid") AS "unique_users",
 COUNT(*) * 0.008 AS "revenue",
 (COUNT(*) * 0.008) / NULLIF(COUNT(DISTINCT "uuid"),0) AS "arpu"
 FROM "streams_enriched"
-""")
+""",conn)
 
-dau_df = run_query(f"""
+dau_df = pd.read_sql(f"""
 SELECT COUNT(DISTINCT "uuid") AS "dau"
 FROM "streams_enriched"
 WHERE "event_date" = (
 SELECT MAX("event_date")
 FROM "streams_enriched"
 )
-""")
+""",conn)
 
 total_streams = int(kpi_df["total_streams"][0])
 unique_users = int(kpi_df["unique_users"][0])
@@ -148,12 +136,12 @@ st.divider()
 
 col1, col2 = st.columns([1, 1])
 
-genre_df = run_query("""
+genre_df = pd.read_sql("""
 SELECT "genre", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "genre" IS NOT NULL
 GROUP BY "genre"
-""")
+""",conn)
 
 fig_genre = px.pie(
 genre_df,
@@ -164,14 +152,14 @@ title="Streams Distribution by Genre"
 
 col1.plotly_chart(fig_genre, use_container_width=True)
 
-artist_df = run_query("""
+artist_df = pd.read_sql("""
 SELECT "artist", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "artist" IS NOT NULL
 GROUP BY "artist"
 ORDER BY "streams" DESC
 LIMIT 50;
-""")
+""",conn)
 
 wordcloud = WordCloud(
 width=800,
@@ -193,76 +181,72 @@ st.divider()
 #cards sections (2x2)
 
 #1. countries
-country_card_df = run_query("""
+country_card_df = pd.read_sql("""
 SELECT "country", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "country" IS NOT NULL
 GROUP BY "country"
-""")
+""",conn)
 
 #2. artists
-artist_card_df = run_query("""
+artist_card_df = pd.read_sql("""
 SELECT "artist", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "artist" IS NOT NULL
 GROUP BY "artist"
-""")
+""",conn)
 
 #3. releases
-song_card_df = run_query("""
+song_card_df = pd.read_sql("""
 SELECT "artwork_url","title", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "title" IS NOT NULL
 GROUP BY "title","artwork_url"
-""")
+""",conn)
 
 #4. albums
-albums_card_df = run_query("""
+albums_card_df = pd.read_sql("""
 SELECT "artwork_url","album", COUNT(*) AS "streams"
 FROM "streams_enriched"
 WHERE "album" IS NOT NULL
 GROUP BY "album","artwork_url"
-""")
+""",conn)
 
 row1_col1, row1_col2 = st.columns(2)
 row2_col1, row2_col2 = st.columns(2)
 
 with row1_col1:
-    paginated_card_list(
+    scrollable_card_list(
     title="Songs",
     df=song_card_df,
     name_col="title",
     stream_col="streams",
-    image_col="artwork_url",
-    key_prefix="songs"
+    image_col="artwork_url"
     )
 
 with row1_col2:
-    paginated_card_list(
+    scrollable_card_list(
     title="Artists",
     df=artist_card_df,
     name_col="artist",
-    stream_col="streams",
-    key_prefix="artists"
+    stream_col="streams"
     )
 
 with row2_col1:
-    paginated_card_list(
+    scrollable_card_list(
     title="Countries",
     df=country_card_df,
     name_col="country",
-    stream_col="streams",
-    key_prefix="countries"
+    stream_col="streams"
     )
 
 with row2_col2:
-    paginated_card_list(
+    scrollable_card_list(
     title="Albums",
     df=albums_card_df,
     name_col="album",
     stream_col="streams",
-    image_col="artwork_url",
-    key_prefix="albums"
+    image_col="artwork_url"
     )
 
 st.divider()
