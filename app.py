@@ -128,9 +128,9 @@ GROUP BY "country", "generation";
 
 fig_gen = px.bar(
 gen_bar_df,
-x="country",
-y="streams",
-color="generation",
+x="Country",
+y="Streams",
+color="Generation",
 barmode="group",
 title="Music Streaming Habits by Country & Generation"
 )
