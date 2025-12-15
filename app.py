@@ -27,44 +27,6 @@ def get_connection():
 
 conn = get_connection()
 
-#paginated card
-def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
-    st.markdown(f"### {title}")
-    st.caption(f"Total {title.lower()}: {len(df)}")
-
-    with st.container(height=360):
-        for _, row in df.iterrows():
-            with st.container():
-                cols = st.columns([1,4,2])
-
-                if image_col and pd.notna(row[image_col]):
-                    cols[0].image(row[image_col], width=50)
-                else:
-                    cols[0].markdown("🎵")
-
-                cols[1].markdown(
-                f"""
-                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                <b>{row[name_col]}</b>
-                </div>
-                """,
-                unsafe_allow_html=True
-                )
-
-                cols[2].markdown(
-                f"""
-                <div style="text-align:right;">
-                <b>{int(row[stream_col])}</b>
-                Streams
-                </div>
-                """,
-                unsafe_allow_html=True
-                )
-
-                st.divider()
-
-                st.markdown('</div>', unsafe_allow_html=True)
-
 #kpi cards
 kpi_df = pd.read_sql(f"""
 SELECT
@@ -145,79 +107,6 @@ ax.axis("off")
 ax.set_title("Top Artists by Streams",fontsize=12,fontweight="bold",pad=20)
 
 col2.pyplot(fig)
-
-st.divider()
-
-#cards sections (2x2)
-
-#1. countries
-country_card_df = pd.read_sql("""
-SELECT "country", COUNT(*) AS "streams"
-FROM "streams_enriched"
-WHERE "country" IS NOT NULL
-GROUP BY "country"
-""",conn)
-
-#2. artists
-artist_card_df = pd.read_sql("""
-SELECT "artist", COUNT(*) AS "streams"
-FROM "streams_enriched"
-WHERE "artist" IS NOT NULL
-GROUP BY "artist"
-""",conn)
-
-#3. releases
-song_card_df = pd.read_sql("""
-SELECT "artwork_url","title", COUNT(*) AS "streams"
-FROM "streams_enriched"
-WHERE "title" IS NOT NULL
-GROUP BY "title","artwork_url"
-""",conn)
-
-#4. albums
-albums_card_df = pd.read_sql("""
-SELECT "artwork_url","album", COUNT(*) AS "streams"
-FROM "streams_enriched"
-WHERE "album" IS NOT NULL
-GROUP BY "album","artwork_url"
-""",conn)
-
-row1_col1, row1_col2 = st.columns(2)
-row2_col1, row2_col2 = st.columns(2)
-
-with row1_col1:
-    scrollable_card_list(
-    title="Songs",
-    df=song_card_df,
-    name_col="title",
-    stream_col="streams",
-    image_col="artwork_url"
-    )
-
-with row1_col2:
-    scrollable_card_list(
-    title="Artists",
-    df=artist_card_df,
-    name_col="artist",
-    stream_col="streams"
-    )
-
-with row2_col1:
-    scrollable_card_list(
-    title="Countries",
-    df=country_card_df,
-    name_col="country",
-    stream_col="streams"
-    )
-
-with row2_col2:
-    scrollable_card_list(
-    title="Albums",
-    df=albums_card_df,
-    name_col="album",
-    stream_col="streams",
-    image_col="artwork_url"
-    )
 
 st.divider()
 
