@@ -72,7 +72,7 @@ genre_df = pd.read_sql("""
 SELECT "genre", COUNT(*) AS "streams"
 FROM "streams_enriched"
 AND "genre" IS NOT NULL
-GROUP BY "genre";
+GROUP BY "genre"
 """,conn)
 
 fig_genre = px.pie(
