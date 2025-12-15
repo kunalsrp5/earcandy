@@ -113,14 +113,14 @@ st.divider()
 #country-wise age-wise listeners bar graph
 gen_bar_df = pd.read_sql("""
 SELECT
-"country",
+"country" as "Country",
 CASE
 WHEN "age" >= 60 THEN 'Boomers'
 WHEN "age" BETWEEN 25 AND 40 THEN 'Millennials'
 WHEN "age" BETWEEN 18 AND 24 THEN 'Gen Z'
 ELSE 'Other'
-END AS "generation",
-COUNT(*) AS "streams"
+END AS "Generation",
+COUNT(*) AS "Streams"
 FROM "streams_enriched"
 WHERE "country" IS NOT NULL
 GROUP BY "country", "generation";
