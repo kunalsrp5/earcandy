@@ -62,9 +62,6 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
                 )
 
                 st.divider()
-        
-                st.markdown('</div>', unsafe_allow_html=True)
-
 
 #kpi cards
 kpi_df = pd.read_sql(f"""
