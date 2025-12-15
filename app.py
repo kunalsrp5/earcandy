@@ -32,21 +32,6 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
     st.markdown(f"### {title}")
     st.caption(f"Total {title.lower()}: {len(df)}")
 
-    search = st.text_input(f"Search {title}")
-    if search:
-        df = df[df[name_col].str.contains(search, case=False, na=False)]
-
-    sort_order = st.selectbox(
-    "Sort by streams",
-    ["Descending", "Ascending"],
-    key=f"{title}_sort"
-    )
-
-    df = df.sort_values(
-    stream_col,
-    ascending=(sort_order == "Ascending")
-    )
-
     with st.container(height=380):
         for _, row in df.iterrows():
             cols = st.columns([1, 4, 2])
