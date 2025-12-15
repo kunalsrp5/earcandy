@@ -34,35 +34,36 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
 
     with st.container(height=380):
         for _, row in df.iterrows():
-            cols = st.columns([1, 4, 2])
+            with st.container():
+                cols = st.columns([1, 4, 2])
 
-            if image_col and pd.notna(row[image_col]):
-                cols[0].image(row[image_col], width=55)
-            else:
-                cols[0].markdown("🎵")
+                if image_col and pd.notna(row[image_col]):
+                    cols[0].image(row[image_col], width=55)
+                else:
+                    cols[0].markdown("🎵")
 
-        cols[1].markdown(
-        f"""
-        <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-        <b>{row[name_col]}</b>
-        </div>
-        """,
-        unsafe_allow_html=True
-        )
+                cols[1].markdown(
+                f"""
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                <b>{row[name_col]}</b>
+                </div>
+                """,
+                unsafe_allow_html=True
+                )
 
-        cols[2].markdown(
-        f"""
-        <div style="text-align:right">
-        <b>{int(row[stream_col])}</b><br/>
-        Streams
-        </div>
-        """,
-        unsafe_allow_html=True
-        )
+                cols[2].markdown(
+                f"""
+                <div style="text-align:right">
+                <b>{int(row[stream_col])}</b><br/>
+                Streams
+                </div>
+                """,
+                unsafe_allow_html=True
+                )
 
-        st.divider()
-
-        st.markdown('</div>', unsafe_allow_html=True)
+                st.divider()
+        
+                st.markdown('</div>', unsafe_allow_html=True)
 
 
 #kpi cards
