@@ -4,4 +4,3 @@ plotly
 snowflake-connector-python
 matplotlib
 wordcloud
-math
