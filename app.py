@@ -71,7 +71,7 @@ col1, col2 = st.columns([1, 1])
 genre_df = pd.read_sql("""
 SELECT "genre", COUNT(*) AS "streams"
 FROM "streams_enriched"
-AND "genre" IS NOT NULL
+WHERE "genre" IS NOT NULL
 GROUP BY "genre"
 """,conn)
 
