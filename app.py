@@ -35,7 +35,7 @@ def scrollable_card_list(title,df,name_col,stream_col,image_col=None):
     with st.container(height=380):
         for _, row in df.iterrows():
             with st.container():
-                cols = st.columns([1.5, 4, 2])
+                cols = st.columns([2, 2, 2])
 
                 if image_col and pd.notna(row[image_col]):
                     cols[0].image(row[image_col], width=100)
