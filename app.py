@@ -137,5 +137,37 @@ title="Music Streaming Habits by Country & Generation"
 
 st.plotly_chart(fig_gen, use_container_width=True)
 
+st.divider()
+
+#streams-over-time
+streams_time_df = pd.read_sql("""
+    SELECT
+        "event_date",
+        COUNT(*) AS "total_streams"
+    FROM "streams_enriched"
+    WHERE "event_date" IS NOT NULL
+    GROUP BY "event_date"
+    ORDER BY "event_date"
+""", conn)
+
+fig = px.line(
+    streams_time_df,
+    title = "Streaming Activity over Time"
+    x="event_date",
+    y="total_streams",
+    markers=True,
+    labels={
+        "event_date": "Date",
+        "total_streams": "Total Streams"
+    }
+)
+
+fig.update_layout(
+    height=350,
+    margin=dict(l=40, r=40, t=40, b=40),
+    hovermode="x unified"
+)
+
+st.plotly_chart(fig, use_container_width=True)
 #footer
 st.caption("Built with Streamlit • Earcandy Analytics®")
