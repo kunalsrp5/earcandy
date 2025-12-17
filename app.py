@@ -152,7 +152,7 @@ streams_time_df = pd.read_sql("""
 
 fig = px.line(
     streams_time_df,
-    title = "Streaming Activity over Time"
+    title = "Streaming Activity over Time",
     x="event_date",
     y="total_streams",
     markers=True,
