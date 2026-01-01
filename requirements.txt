@@ -5,3 +5,4 @@ snowflake-connector-python
 matplotlib
 wordcloud
 sqlalchemy
+psycopg2
